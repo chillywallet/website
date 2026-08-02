@@ -62,6 +62,32 @@ the same reason: the project does not redistribute marks it has no licence for.
 
 Brand assets are generated in the wallet repo, never hand-edited. Regenerate them there.
 
+## Deployment
+
+`.github/workflows/deploy.yml` builds with the Vercel CLI and uploads the result: push to `main`
+goes to production, a pull request gets a preview. Typecheck, lint, formatting and a privacy-policy
+sanity check all run first, so a deploy cannot land while any of them is red. After a production
+deploy it curls `/` and `/privacy` and fails unless both answer 200 — those two URLs are what the
+Chrome Web Store listing points at, and a store rejection is the wrong way to find out they broke.
+
+Three repository secrets are required, under **Settings → Secrets and variables → Actions**. They
+currently exist as `REPLACE_ME` placeholders, and the workflow fails early with a clear message
+until they are filled in.
+
+| Secret              | Where it comes from                                                             |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `VERCEL_TOKEN`      | [vercel.com/account/tokens](https://vercel.com/account/tokens) → Create Token   |
+| `VERCEL_ORG_ID`     | `.vercel/project.json` after `npx vercel link`, or Account Settings → General   |
+| `VERCEL_PROJECT_ID` | `.vercel/project.json` after `npx vercel link`, or Project → Settings → General |
+
+```bash
+npx vercel link && cat .vercel/project.json   # prints both ids; .vercel/ is gitignored
+```
+
+**Do not also connect Vercel's Git integration to this repo.** Both it and this workflow would fire
+on every push, producing two deployments per commit that race for the same alias. Use one or the
+other.
+
 ## The install button
 
 `src/lib/site.ts` holds `CHROME_STORE_URL`. While it is `null` the hero points at the source repo

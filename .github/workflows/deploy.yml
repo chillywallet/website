@@ -58,6 +58,32 @@ jobs:
                   grep -q '## What the extension sends to third parties' src/content/privacy.md
                   grep -q '## Contact' src/content/privacy.md
 
+            # The three secrets exist as REPLACE_ME placeholders so the repo is wired
+            # up before anyone has a Vercel account to point it at. Without this
+            # check the run would get as far as the Vercel CLI and fail with an
+            # opaque auth error, which reads like a broken workflow rather than an
+            # unset secret.
+            - name: Vercel secrets are set
+              run: |
+                  missing=0
+                  for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+                      value="${!name}"
+                      if [ -z "$value" ] || [ "$value" = "REPLACE_ME" ]; then
+                          echo "::error::$name is unset or still the REPLACE_ME placeholder"
+                          missing=1
+                      fi
+                  done
+                  if [ "$missing" = "1" ]; then
+                      echo "Set them under Settings -> Secrets and variables -> Actions." >> "$GITHUB_STEP_SUMMARY"
+                      echo "VERCEL_TOKEN: vercel.com/account/tokens" >> "$GITHUB_STEP_SUMMARY"
+                      echo "The two ids: run \`npx vercel link\` and read .vercel/project.json" >> "$GITHUB_STEP_SUMMARY"
+                      exit 1
+                  fi
+              env:
+                  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
             - name: Install Vercel CLI
               run: npm install --global vercel@latest
 
