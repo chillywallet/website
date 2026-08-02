@@ -1,0 +1,10 @@
+.next
+node_modules
+out
+.vercel
+package-lock.json
+public/screens
+
+# A verbatim mirror of PRIVACY.md in the wallet repo — reformatting it here would
+# break the byte-for-byte guarantee that lets `diff` prove the two are identical.
+src/content/privacy.md

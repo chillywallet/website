@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+
+/*
+ * The Chilly "Frost" palette, copied from the wallet's tailwind.config.js.
+ * Keep these in step with chillywallet/chrome-extension — the site and the app
+ * are meant to read as one product.
+ *
+ * This site is dark-only. The wallet has a light mode; a marketing page does not
+ * need one, so there are no `dark:` variants anywhere. Please don't add them.
+ */
+@theme {
+    --color-primary: #4aa8dc;
+    --color-primarydark: #2e8fc4;
+    --color-accent: #69c4ee;
+    --color-mint: #7fe8c1;
+    --color-coral: #f58a3c;
+    --color-coraldark: #dd7327;
+    --color-ice: #dcf1fb;
+    --color-dark: #152b40;
+    --color-header: #1e3a54;
+    --color-darker: #0f2233;
+    --color-darkline: #2a4159;
+
+    --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+    --font-display:
+        var(--font-space-grotesk), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Frost signature — the aurora hairline, verbatim from the wallet's pages.css.
+ * Reserved for hero moments. It appears exactly once on this site, under the
+ * hero headline; repeating it as a section divider is what would kill it.
+ */
+@keyframes aurora-shift {
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.aurora-line {
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #69c4ee, #7fe8c1, #69c4ee);
+    background-size: 200% 100%;
+    animation: aurora-shift 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aurora-line {
+        animation: none;
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}

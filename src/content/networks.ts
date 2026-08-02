@@ -1,0 +1,48 @@
+/*
+ * The 40 mainnets, in the order the store listing names them. Kept as plain text
+ * on purpose: the wallet renders generated monogram badges rather than official
+ * chain logos, because vendoring third-party marks would mean redistributing
+ * assets the project has no licence for. The same reasoning applies here.
+ */
+export const NETWORKS = [
+    'Ethereum',
+    'Base',
+    'Polygon',
+    'Arbitrum',
+    'Optimism',
+    'BNB Chain',
+    'Avalanche',
+    'ZKsync Era',
+    'Scroll',
+    'Linea',
+    'Blast',
+    'Zora',
+    'Mode',
+    'Metis',
+    'Ink',
+    'Soneium',
+    'Lisk',
+    'Aurora',
+    'Gnosis',
+    'Celo',
+    'Unichain',
+    'BOB',
+    'Degen',
+    'Plume',
+    'Taiko',
+    'World Chain',
+    'Mantle',
+    'opBNB',
+    'Sonic',
+    'Berachain',
+    'Sei',
+    'ApeChain',
+    'HyperEVM',
+    'Katana',
+    'Plasma',
+    'Abstract',
+    'Moonbeam',
+    'Moonriver',
+    'XDC',
+    'Monad',
+];

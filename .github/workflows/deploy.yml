@@ -1,0 +1,91 @@
+name: Deploy
+
+# Builds with the Vercel CLI and uploads the result, rather than letting Vercel's
+# Git integration build it. That keeps the checks (typecheck, lint, build) and the
+# deploy in one place, so a deploy cannot succeed while typecheck is failing.
+#
+# IMPORTANT: do not also connect this repo to Vercel's Git integration. Both would
+# fire on every push and you would get two deployments per commit, racing for the
+# same alias. Either use this workflow, or use the Git integration and delete it.
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    # A newer push to the same ref makes an in-flight deploy pointless.
+    group: deploy-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+    VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        # A fork PR cannot read secrets, so the deploy steps would fail confusingly.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+
+            - run: npm ci
+
+            - name: Typecheck
+              run: npm run typecheck
+
+            - name: Lint
+              run: npm run lint
+
+            - name: Check formatting
+              run: npm run format:check
+
+            # The privacy policy is a mirror of PRIVACY.md in the wallet repo and is
+            # referenced by the Chrome Web Store listing. If it is ever empty or
+            # missing a section, the store's reachability check passes while the page
+            # says nothing — fail here instead.
+            - name: Privacy policy is intact
+              run: |
+                  test -s src/content/privacy.md
+                  grep -q '## What we collect' src/content/privacy.md
+                  grep -q '## What the extension sends to third parties' src/content/privacy.md
+                  grep -q '## Contact' src/content/privacy.md
+
+            - name: Install Vercel CLI
+              run: npm install --global vercel@latest
+
+            - name: Pull Vercel environment
+              run: >-
+                  vercel pull --yes
+                  --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+                  --token=${{ secrets.VERCEL_TOKEN }}
+
+            - name: Build
+              run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+            - name: Deploy
+              id: deploy
+              run: |
+                  url=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+                  echo "url=$url" >> "$GITHUB_OUTPUT"
+                  echo "Deployed to $url" >> "$GITHUB_STEP_SUMMARY"
+
+            # The whole point of this site is that two URLs answer 200. Prove it on
+            # every production deploy rather than finding out from a store rejection.
+            - name: Verify the deployment answers
+              if: github.ref == 'refs/heads/main'
+              run: |
+                  url="${{ steps.deploy.outputs.url }}"
+                  for path in "/" "/privacy"; do
+                      code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url$path")
+                      echo "$path -> $code"
+                      test "$code" = "200"
+                  done
+                  curl -sS --max-time 30 "$url/privacy" | grep -q 'third parties'
