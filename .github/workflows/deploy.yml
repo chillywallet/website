@@ -105,13 +105,21 @@ jobs:
 
             # The whole point of this site is that two URLs answer 200. Prove it on
             # every production deploy rather than finding out from a store rejection.
-            - name: Verify the deployment answers
+            #
+            # Checks the real domain, not the deployment URL: Vercel Authentication
+            # is on for everything except custom domains, so the *.vercel.app URL
+            # answers 302 to a login page no matter how healthy the deploy is.
+            #
+            # -L because the apex may 308 to www (or the reverse) depending on which
+            # domain is primary in Vercel; either is fine so long as it lands on 200.
+            - name: Verify the site answers
               if: github.ref == 'refs/heads/main'
               run: |
-                  url="${{ steps.deploy.outputs.url }}"
-                  for path in "/" "/privacy"; do
-                      code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url$path")
-                      echo "$path -> $code"
+                  sleep 10
+                  for url in "https://chillywallet.com/" "https://chillywallet.com/privacy"; do
+                      code=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 30 "$url")
+                      echo "$url -> $code"
                       test "$code" = "200"
                   done
-                  curl -sS --max-time 30 "$url/privacy" | grep -q 'third parties'
+                  curl -sSL --max-time 30 https://chillywallet.com/privacy | grep -q 'third parties'
+                  curl -sSL --max-time 30 https://chillywallet.com/ | grep -q 'multi-chain'
